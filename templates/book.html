@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Book Meeting Room</h2>
+
+<!-- Week Navigation -->
+<div class="week-navigation">
+    <a href="{{ url_for('book', week_offset=week_offset-1) }}" class="btn btn-outline-secondary nav-btn">
+        <i class="fas fa-chevron-left"></i>
+        Previous Week
+    </a>
+    
+    <div class="week-display">
+        {{ week_info.week_display }}
+    </div>
+    
+    <a href="{{ url_for('book', week_offset=week_offset+1) }}" class="btn btn-outline-secondary nav-btn">
+        Next Week
+        <i class="fas fa-chevron-right"></i>
+    </a>
+</div>
+
+<form method="POST" id="bookingForm" onsubmit="return validateForm()">
+    <input type="hidden" name="week_offset" value="{{ week_offset }}">
+    
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-control" name="name" id="nameField" required 
+               onkeydown="handleEnterKey(event, 'agendaField')">
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">Agenda</label>
+        <input type="text" class="form-control" name="agenda" id="agendaField" required 
+               onkeydown="handleEnterKey(event, 'dateField')" 
+               placeholder="What is this meeting about?">
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">Date</label>
+        <select class="form-control" name="date" id="dateField" required 
+                onkeydown="handleEnterKey(event, 'start_timeField')">
+            <option value="">Select a date</option>
+            {% for date in week_dates %}
+            <option value="{{ date.date }}" 
+                    {% if prefill_date and prefill_date == date.date %}selected{% endif %}>
+                {{ date.display }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">Start Time</label>
+        <select class="form-control" name="start_time" id="start_timeField" required 
+                onkeydown="handleEnterKey(event, 'end_timeField')">
+            <option value="">Select start time</option>
+            {% for time in time_slots %}
+            <option value="{{ time }}"
+                    {% if prefill_start_time and prefill_start_time == time %}selected{% endif %}>
+                {{ time }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">End Time</label>
+        <select class="form-control" name="end_time" id="end_timeField" required 
+                onkeydown="handleEnterKey(event, 'submitButton')">
+            <option value="">Select end time</option>
+            {% for time in time_slots %}
+            <option value="{{ time }}"
+                    {% if prefill_end_time and prefill_end_time == time %}selected{% endif %}>
+                {{ time }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <button type="submit" class="btn btn-success" id="submitButton">Book Room</button>
+    <a href="{{ url_for('index', week_offset=week_offset) }}" class="btn btn-secondary">Cancel</a>
+</form>
+
+<script>
+function handleEnterKey(event, nextFieldId) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent form submission
+        
+        if (nextFieldId === 'submitButton') {
+            // If we're on the last field, submit the form
+            if (validateForm()) {
+                document.getElementById('bookingForm').submit();
+            }
+        } else {
+            // Move to next field
+            const nextField = document.getElementById(nextFieldId);
+            if (nextField) {
+                nextField.focus();
+            }
+        }
+    }
+}
+
+function validateForm() {
+    const name = document.getElementById('nameField').value.trim();
+    const agenda = document.getElementById('agendaField').value.trim();
+    const date = document.getElementById('dateField').value;
+    const startTime = document.getElementById('start_timeField').value;
+    const endTime = document.getElementById('end_timeField').value;
+    
+    if (!name || !agenda || !date || !startTime || !endTime) {
+        alert('Please fill in all fields before booking.');
+        return false;
+    }
+    
+    // Check if end time is after start time
+    if (startTime && endTime) {
+        const start = new Date('2000-01-01 ' + startTime);
+        const end = new Date('2000-01-01 ' + endTime);
+        
+        if (end <= start) {
+            alert('End time must be after start time.');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Auto-focus on the first field when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('nameField').focus();
+});
+</script>
+
+{% endblock %}

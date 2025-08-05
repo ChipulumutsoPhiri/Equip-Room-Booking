@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Meeting Room Schedule</h2>
+
+<!-- Week Navigation -->
+<div class="week-navigation {% if week_info.is_current_week %}current-week{% endif %}">
+    <a href="{{ url_for('index', week_offset=week_offset-1) }}" class="btn btn-outline-primary nav-btn">
+        <i class="fas fa-chevron-left"></i>
+        Previous Week
+    </a>
+    
+    <div class="week-display">
+        {{ week_info.week_display }}
+        {% if week_info.is_current_week %}
+            <span class="badge bg-success ms-2">Current Week</span>
+        {% endif %}
+    </div>
+    
+    <a href="{{ url_for('index', week_offset=week_offset+1) }}" class="btn btn-outline-primary nav-btn">
+        Next Week
+        <i class="fas fa-chevron-right"></i>
+    </a>
+</div>
+
+{% if week_offset == 0 %}
+<div class="alert alert-info text-center">
+    <i class="fas fa-info-circle me-2"></i>
+    You are viewing the current week. Use the navigation above to view other weeks.
+</div>
+{% endif %}
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Time</th>
+                {% for date in week_dates %}
+                <th>{{ date.display }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for time_slot in time_slots %}
+            <tr>
+                <td class="time-slot"><strong>{{ time_slot }}</strong></td>
+                {% for date in week_dates %}
+                <td class="{% if schedule[date.date][time_slot] %}booked{% else %}available{% endif %}"
+                    {% if not schedule[date.date][time_slot] %}
+                    onclick="location.href='{{ url_for('quick_book', date=date.date, time=time_slot, week_offset=week_offset) }}'"
+                    title="Click to book this time slot"
+                    {% endif %}>
+                    {% if schedule[date.date][time_slot] %}
+                        {{ schedule[date.date][time_slot] }}
+                    {% else %}
+                        <span class="quick-book-hint">Available</span>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-3">
+    <a href="{{ url_for('book', week_offset=week_offset) }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Book Meeting Room
+    </a>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="alert alert-success">
+            <strong><i class="fas fa-check-circle me-2"></i>Available:</strong> 
+            Click on any available slot to book quickly
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="alert alert-danger">
+            <strong><i class="fas fa-times-circle me-2"></i>Booked:</strong> 
+            Time slots already reserved by teams
+        </div>
+    </div>
+</div>
+{% endblock %}
