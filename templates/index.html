@@ -1,119 +1,300 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Meeting Room Schedule</h2>
+<div class="hero-section text-center mb-5">
+    <h1 class="display-4 mb-3">
+        <i class="fas fa-building text-primary me-3"></i>
+        Office Resource Booking
+    </h1>
 </div>
 
-<!-- Week Navigation -->
-<div class="week-navigation {% if week_info.is_current_week %}current-week{% endif %}">
-    <div class="week-display">
-        {{ week_info.week_display }}
-        {% if week_info.is_current_week %}
-            <span class="badge bg-success ms-2">Current Week</span>
-        {% endif %}
+<div class="row g-4">
+    <!-- Meeting Room Booking Card -->
+    <div class="col-md-6">
+        <div class="resource-card h-100" onclick="location.href='{{ url_for('room_index') }}'">
+            <div class="card-body text-center p-5">
+                <div class="resource-icon mb-4">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <h3 class="card-title mb-3">Meeting Room</h3>
+                <p class="card-text text-muted mb-4">
+                    Book the conference room for meetings, presentations, and team discussions
+                </p>
+                
+                <!-- Quick stats -->
+                <div class="resource-stats mb-4">
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="stat-number">{{ room_stats.upcoming }}</div>
+                            <div class="stat-label">Upcoming</div>
+                        </div>
+                        <div class="col">
+                            <div class="stat-number">{{ room_stats.today }}</div>
+                            <div class="stat-label">Today</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{{ url_for('room_index') }}" class="btn btn-primary btn-lg me-2">
+                        <i class="fas fa-calendar-alt me-2"></i>View Schedule
+                    </a>
+                    <a href="{{ url_for('room_book') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>Quick Book
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Company Car Booking Card -->
+    <div class="col-md-6">
+        <div class="resource-card h-100" onclick="location.href='{{ url_for('car_index') }}'">
+            <div class="card-body text-center p-5">
+                <div class="resource-icon mb-4">
+                    <i class="fas fa-car"></i>
+                </div>
+                <h3 class="card-title mb-3">Company Car</h3>
+                <p class="card-text text-muted mb-4">
+                    Reserve the company vehicle for business trips, client visits, and errands
+                </p>
+                
+                <!-- Quick stats -->
+                <div class="resource-stats mb-4">
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="stat-number">{{ car_stats.upcoming }}</div>
+                            <div class="stat-label">Upcoming</div>
+                        </div>
+                        <div class="col">
+                            <div class="stat-number">{{ car_stats.today }}</div>
+                            <div class="stat-label">Today</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{{ url_for('car_index') }}" class="btn btn-success btn-lg me-2">
+                        <i class="fas fa-calendar-alt me-2"></i>View Schedule
+                    </a>
+                    <a href="{{ url_for('car_book') }}" class="btn btn-outline-success">
+                        <i class="fas fa-plus me-2"></i>Quick Book
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Access Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-lightning-bolt me-2 text-warning"></i>
+                    Quick Actions
+                </h5>
+                <div class="row g-3">
+                    
+                    <div class="col-md-3">
+                        <a href="{{ url_for('room_book') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-door-open me-2"></i>Book Room
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('car_book') }}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-car me-2"></i>Book Car
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" onclick="showTodaysBookings()" class="btn btn-outline-info w-100">
+                            <i class="fas fa-clock me-2"></i>Today's Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Bookings Modal -->
+<div class="modal fade" id="todaysBookingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clock me-2"></i>Today's Bookings
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="todaysBookingsContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin: -1.5rem -15px 3rem -15px;
+    padding: 4rem 2rem;
+    border-radius: 0 0 20px 20px;
+}
+
+/* Enhanced styling for the subtitle to make it much bolder and more readable */
+.hero-section .lead {
+    color: #fff;
+    font-weight: 900; /* Increased from 700 to 900 for maximum boldness */
+    font-size: 1.4rem; /* Slightly increased size */
+    text-shadow: 0 3px 12px rgba(0,0,0,0.3); /* Stronger shadow for better contrast */
+    letter-spacing: 0.8px; /* Increased letter spacing */
+    opacity: 0.95; /* Slight opacity to make it stand out against gradient */
+}
+
+.resource-card {
+    background: white;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.resource-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.resource-card:nth-child(1) .resource-icon i {
+    color: #007bff;
+}
+
+.resource-card:nth-child(2) .resource-icon i {
+    color: #28a745;
+}
+
+.resource-icon i {
+    font-size: 4rem;
+    opacity: 0.8;
+}
+
+.resource-stats {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1rem;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-buttons .btn {
+    border-radius: 25px;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 1rem;
+        margin: -1rem -10px 2rem -10px;
+    }
     
-    <div class="week-nav-buttons">
-        <a href="{{ url_for('index', week_offset=week_offset-1) }}" class="btn btn-outline-primary nav-btn">
-            <i class="fas fa-chevron-left"></i>
-            <span class="d-none d-sm-inline">Previous</span>
-        </a>
-        
-        <a href="{{ url_for('index', week_offset=week_offset+1) }}" class="btn btn-outline-primary nav-btn">
-            <span class="d-none d-sm-inline">Next</span>
-            <i class="fas fa-chevron-right"></i>
-        </a>
-    </div>
-</div>
+    .resource-card .card-body {
+        padding: 2rem 1rem;
+    }
+    
+    .resource-icon i {
+        font-size: 3rem;
+    }
+    
+    .action-buttons .btn-lg {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .action-buttons .btn {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    .action-buttons .me-2 {
+        margin-right: 0 !important;
+        margin-bottom: 0.5rem;
+    }
+}
 
-{% if week_offset == 0 %}
-<div class="alert alert-info text-center">
-    <i class="fas fa-info-circle me-2"></i>
-    <span class="d-none d-sm-inline">You are viewing the current week. Use the navigation above to view other weeks.</span>
-    <span class="d-sm-none">Current week view. Use arrows to navigate.</span>
-</div>
-{% endif %}
+@media (max-width: 576px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .resource-stats .row > .col {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
 
-<!-- Mobile-optimized table -->
-<div class="table-responsive">
-    <table class="table table-bordered schedule-table">
-        <thead>
-            <tr>
-                <th style="min-width: 60px;">Time</th>
-                {% for date in week_dates %}
-                <th style="min-width: 80px;">
-                    <div class="d-none d-md-block">{{ date.display }}</div>
-                    <div class="d-md-none">{{ date.date[-2:] }}/{{ date.date[5:7] }}</div>
-                </th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for time_slot in time_slots %}
-            <tr>
-                <td class="time-slot">
-                    <div class="d-none d-sm-block">{{ time_slot }}</div>
-                    <div class="d-sm-none" style="font-size: 0.6em;">{{ time_slot }}</div>
-                </td>
-                {% for date in week_dates %}
-                <td class="{% if schedule[date.date][time_slot] %}booked{% else %}available{% endif %}"
-                    {% if not schedule[date.date][time_slot] %}
-                    onclick="location.href='{{ url_for('quick_book', date=date.date, time=time_slot, week_offset=week_offset) }}'"
-                    title="Click to book {{ time_slot }} on {{ date.display }}"
-                    style="cursor: pointer;"
-                    {% endif %}>
-                    {% if schedule[date.date][time_slot] %}
-                        <div class="d-none d-md-block">{{ schedule[date.date][time_slot] }}</div>
-                        <div class="d-md-none" style="font-size: 0.6em;">{{ schedule[date.date][time_slot][:8] }}{% if schedule[date.date][time_slot]|length > 8 %}...{% endif %}</div>
-                    {% else %}
-                        <div class="d-none d-sm-block">
-                            <span class="quick-book-hint">Available</span>
-                        </div>
-                        <div class="d-sm-none" style="font-size: 0.6em; color: #28a745;">
-                            ✓
-                        </div>
-                    {% endif %}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Action button -->
-<div class="mt-3 text-center">
-    <a href="{{ url_for('book', week_offset=week_offset) }}" class="btn btn-primary btn-lg">
-        <i class="fas fa-plus-circle"></i> Book Meeting Room
-    </a>
-</div>
-
-<!-- Legend - responsive layout -->
-<div class="row mt-4 g-3">
-    <div class="col-12 col-md-6">
-        <div class="alert alert-success mb-0">
-            <strong><i class="fas fa-check-circle me-2"></i>Available:</strong> 
-            <span class="d-none d-sm-inline">Click on any available slot to book quickly</span>
-            <span class="d-sm-none">Tap to book</span>
-        </div>
-    </div>
-    <div class="col-12 col-md-6">
-        <div class="alert alert-danger mb-0">
-            <strong><i class="fas fa-times-circle me-2"></i>Booked:</strong> 
-            <span class="d-none d-sm-inline">Time slots already reserved by teams</span>
-            <span class="d-sm-none">Reserved slots</span>
-        </div>
-    </div>
-</div>
-
-<!-- Quick booking help for mobile -->
-<div class="d-sm-none">
-    <div class="alert alert-info mt-3">
-        <small>
-            <i class="fas fa-mobile-alt me-1"></i>
-            Tap any green ✓ to quickly book that time slot
-        </small>
-    </div>
-</div>
-
+<script>
+function showTodaysBookings() {
+    const modal = new bootstrap.Modal(document.getElementById('todaysBookingsModal'));
+    modal.show();
+    
+    // Load today's bookings via AJAX
+    fetch('/api/todays-bookings')
+        .then(response => response.json())
+        .then(data => {
+            let content = '';
+            
+            if (data.room_bookings.length === 0 && data.car_bookings.length === 0) {
+                content = '<div class="alert alert-info">No bookings scheduled for today!</div>';
+            } else {
+                if (data.room_bookings.length > 0) {
+                    content += '<h6 class="text-primary"><i class="fas fa-door-open me-2"></i>Meeting Room</h6>';
+                    content += '<ul class="list-group mb-3">';
+                    data.room_bookings.forEach(booking => {
+                        content += `<li class="list-group-item d-flex justify-content-between">
+                            <span><strong>${booking.name}</strong> - ${booking.agenda}</span>
+                            <small class="text-muted">${booking.start_time} - ${booking.end_time}</small>
+                        </li>`;
+                    });
+                    content += '</ul>';
+                }
+                
+                if (data.car_bookings.length > 0) {
+                    content += '<h6 class="text-success"><i class="fas fa-car me-2"></i>Company Car</h6>';
+                    content += '<ul class="list-group">';
+                    data.car_bookings.forEach(booking => {
+                        content += `<li class="list-group-item d-flex justify-content-between">
+                            <span><strong>${booking.name}</strong> - ${booking.agenda}</span>
+                            <small class="text-muted">${booking.start_time} - ${booking.end_time}</small>
+                        </li>`;
+                    });
+                    content += '</ul>';
+                }
+            }
+            
+            document.getElementById('todaysBookingsContent').innerHTML = content;
+        })
+        .catch(error => {
+            document.getElementById('todaysBookingsContent').innerHTML = 
+                '<div class="alert alert-danger">Error loading bookings</div>';
+        });
+}
+</script>
 {% endblock %}
