@@ -3,222 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking</title>
+    <title>{% block title %}Office Resource Booking{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Mobile-first responsive design */
-        .booked { 
-            background-color: #ffebee; 
-            color: #c62828;
-            font-weight: bold;
-            padding: 8px;
-            text-align: center;
-            border-radius: 4px;
-        }
-        .available { 
-            background-color: #e8f5e8; 
-            cursor: pointer; 
-            transition: background-color 0.2s;
-            padding: 8px;
-            text-align: center;
-            border-radius: 4px;
-        }
-        .available:hover {
-            background-color: #c8e6c9;
-        }
-        .time-slot { 
-            font-size: 0.9em; 
-            font-weight: bold;
-            background-color: #f5f5f5;
-            white-space: nowrap;
-            padding: 8px;
-        }
-        
-        /* Week navigation - mobile responsive */
-        .week-navigation {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            margin: 20px 0;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-        }
-        
-        .week-nav-buttons {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            justify-content: space-between;
-        }
-        
-        .week-display {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #495057;
-            text-align: center;
-        }
-        
-        .past-week {
-            opacity: 0.7;
-        }
-        .current-week {
-            background-color: #fff3cd;
-            border: 2px solid #ffc107;
-        }
-        .nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex: 1;
-            justify-content: center;
-            min-height: 44px; /* Touch-friendly button size */
-        }
-        
-        /* Schedule table responsive */
-        .schedule-table {
-            font-size: 0.85em;
-        }
-        
-        .schedule-table th {
-            background-color: #343a40;
-            color: white;
-            text-align: center;
-            padding: 10px 4px;
-            font-size: 0.8em;
-        }
-        
-        .schedule-table td {
-            padding: 4px;
-            vertical-align: middle;
-            min-height: 44px; /* Touch-friendly */
-        }
-        
-        .quick-book-hint {
-            font-size: 0.75em;
-            color: #6c757d;
-            font-style: italic;
-        }
-        
-        /* Mobile navbar improvements */
+        /* Global responsive improvements */
         .navbar-brand svg {
-            height: 25px;
+            height: 30px;
         }
-        
+
         .navbar-nav {
             flex-direction: row;
             gap: 10px;
         }
-        
+
         .navbar-nav .nav-link {
             font-size: 0.9em;
             padding: 8px 12px;
         }
-        
-        /* Container adjustments for mobile */
+
         .container {
             padding-left: 10px;
             padding-right: 10px;
         }
-        
-        /* Responsive table wrapper */
-        .table-responsive {
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        /* Mobile alerts */
+
         .alert {
             font-size: 0.9em;
             padding: 12px;
         }
-        
-        /* Mobile buttons */
+
         .btn {
             min-height: 44px;
             font-size: 0.9em;
         }
-        
+
         .btn-sm {
             min-height: 36px;
             font-size: 0.8em;
         }
-        
-        /* Tablet and desktop improvements */
+
         @media (min-width: 768px) {
-            .week-navigation {
-                flex-direction: row;
-                justify-content: center;
-            }
-            
-            .week-nav-buttons {
-                width: auto;
-                justify-content: center;
-            }
-            
-            .nav-btn {
-                flex: none;
-            }
-            
-            .schedule-table {
-                font-size: 0.9em;
-            }
-            
-            .schedule-table th {
-                font-size: 0.9em;
-                padding: 12px 8px;
-            }
-            
-            .schedule-table td {
-                padding: 8px;
-            }
-            
             .navbar-brand svg {
-                height: 30px;
+                height: 35px;
             }
-            
+
+            .navbar-nav .nav-link {
+                font-size: 1em;
+                padding: 10px 15px;
+            }
+
             .container {
                 padding-left: 15px;
                 padding-right: 15px;
-            }
-        }
-        
-        /* Large screens */
-        @media (min-width: 1200px) {
-            .schedule-table {
-                font-size: 1em;
-            }
-            
-            .week-display {
-                font-size: 1.2em;
-            }
-        }
-        
-        /* Fix for very small screens */
-        @media (max-width: 576px) {
-            .schedule-table th,
-            .schedule-table td {
-                font-size: 0.7em;
-                padding: 2px;
-            }
-            
-            .time-slot {
-                font-size: 0.7em;
-            }
-            
-            .quick-book-hint {
-                font-size: 0.6em;
-            }
-            
-            .week-display {
-                font-size: 1em;
-            }
-            
-            .navbar-nav .nav-link {
-                font-size: 0.8em;
-                padding: 6px 8px;
             }
         }
     </style>
@@ -227,13 +63,10 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="/">
+                <!-- ✅ Your original logo preserved -->
                 <svg style="height: 30px; margin-right: 8px;" viewBox="0 0 1028.18 337.41" xmlns="http://www.w3.org/2000/svg">
                   <defs>
-                    <style>
-                      .cls-1 {
-                        fill: white;
-                      }
-                    </style>
+                    <style>.cls-1 { fill: white; }</style>
                   </defs>
                   <g>
                     <path class="cls-1" d="M352.67,0v337.41H0V0h352.67ZM279.95,275.78v-43.19h-148.46v-41.34h148.46v-43.2H118.65v-42.05h161.3v-43.19H118.5v42.91h-41.87v42.83h41.87v34.27h-48.53v60.1h48.53v32.86h161.45ZM76.98,95.99v-23.46h-22.33v23.46h22.33Z"/>
@@ -252,20 +85,46 @@
                   </g>
                 </svg>
             </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/">
-                    <i class="fas fa-calendar"></i> Schedule
-                </a>
-                <a class="nav-link" href="/book">
-                    <i class="fas fa-plus-circle"></i> Book
-                </a>
-                <a class="nav-link" href="/bookings">
-                    <i class="fas fa-list"></i> All
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>
+                            <span class="d-lg-inline d-none">Home</span>
+                        </a>
+                    </li>
+                    <!-- Meeting Room Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="roomDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-door-open"></i>
+                            <span class="d-lg-inline d-none">Meeting Rooms</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="roomDropdown">
+                            <li><a class="dropdown-item" href="/room">View Schedule</a></li>
+                            <li><a class="dropdown-item" href="/room/book">Book a Room</a></li>
+                            <li><a class="dropdown-item" href="/room/bookings">View Bookings</a></li>
+                        </ul>
+                    </li>
+                    <!-- Car Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="carDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-car"></i>
+                            <span class="d-lg-inline d-none">Company Car</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="carDropdown">
+                            <li><a class="dropdown-item" href="/car">View Schedule</a></li>
+                            <li><a class="dropdown-item" href="/car/book">Book Car</a></li>
+                            <li><a class="dropdown-item" href="/car/bookings">View Bookings</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
-    
+
     <div class="container mt-4">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -277,7 +136,7 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
+
         {% block content %}{% endblock %}
     </div>
 
@@ -286,4 +145,3 @@
     {% block scripts %}{% endblock %}
 </body>
 </html>
-
