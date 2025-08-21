@@ -4,13 +4,15 @@ import sqlite3
 import os
 
 app = Flask(__name__)
-app.secret_key = 'meeting-room-app-2025'
+app.secret_key = 'office-resource-booking-2025'
 
 # Database setup
 def init_db():
-    conn = sqlite3.connect('meeting_room.db')
+    conn = sqlite3.connect('office_resources.db')
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS bookings
+    
+    # Meeting room bookings table
+    c.execute('''CREATE TABLE IF NOT EXISTS room_bookings
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   name TEXT NOT NULL,
                   agenda TEXT NOT NULL,
@@ -18,6 +20,17 @@ def init_db():
                   start_time TEXT NOT NULL,
                   end_time TEXT NOT NULL,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    
+    # Car bookings table
+    c.execute('''CREATE TABLE IF NOT EXISTS car_bookings
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  name TEXT NOT NULL,
+                  agenda TEXT NOT NULL,
+                  date TEXT NOT NULL,
+                  start_time TEXT NOT NULL,
+                  end_time TEXT NOT NULL,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    
     conn.commit()
     conn.close()
 
@@ -53,17 +66,17 @@ def get_week_dates(week_offset=0):
     
     return week_dates
 
-def get_bookings_for_week(week_offset=0):
-    """Get all bookings for the specified week"""
-    conn = sqlite3.connect('meeting_room.db')
+def get_bookings_for_week(table_name, week_offset=0):
+    """Get all bookings for the specified week and resource type"""
+    conn = sqlite3.connect('office_resources.db')
     c = conn.cursor()
     
     week_dates = get_week_dates(week_offset)
     start_date = week_dates[0]['date']
     end_date = week_dates[-1]['date']
     
-    c.execute('''SELECT name, agenda, date, start_time, end_time 
-                 FROM bookings 
+    c.execute(f'''SELECT name, agenda, date, start_time, end_time 
+                 FROM {table_name} 
                  WHERE date BETWEEN ? AND ?
                  ORDER BY date, start_time''', (start_date, end_date))
     
@@ -101,15 +114,52 @@ def get_week_info(week_offset=0):
     
     return week_info
 
+def get_booking_stats():
+    """Get booking statistics for the dashboard"""
+    conn = sqlite3.connect('office_resources.db')
+    c = conn.cursor()
+    
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # Room stats
+    c.execute('SELECT COUNT(*) FROM room_bookings WHERE date >= ?', (today,))
+    room_upcoming = c.fetchone()[0]
+    
+    c.execute('SELECT COUNT(*) FROM room_bookings WHERE date = ?', (today,))
+    room_today = c.fetchone()[0]
+    
+    # Car stats
+    c.execute('SELECT COUNT(*) FROM car_bookings WHERE date >= ?', (today,))
+    car_upcoming = c.fetchone()[0]
+    
+    c.execute('SELECT COUNT(*) FROM car_bookings WHERE date = ?', (today,))
+    car_today = c.fetchone()[0]
+    
+    conn.close()
+    
+    return {
+        'room_stats': {'upcoming': room_upcoming, 'today': room_today},
+        'car_stats': {'upcoming': car_upcoming, 'today': car_today}
+    }
+
+# Routes
 @app.route('/')
-def index(week_offset=0):
-    """Main booking view - shows the weekly schedule with navigation"""
-    # Get week_offset from URL parameters if provided
+def index():
+    """Main landing page - choose between room and car booking"""
+    stats = get_booking_stats()
+    return render_template('index.html', 
+                         room_stats=stats['room_stats'],
+                         car_stats=stats['car_stats'])
+
+# MEETING ROOM ROUTES
+@app.route('/room')
+def room_index():
+    """Meeting room schedule view - TEMPORARY using car template"""
     week_offset = request.args.get('week_offset', 0, type=int)
     
     time_slots = get_time_slots()
     week_dates = get_week_dates(week_offset)
-    bookings = get_bookings_for_week(week_offset)
+    bookings = get_bookings_for_week('room_bookings', week_offset)
     week_info = get_week_info(week_offset)
     
     # Create a schedule grid
@@ -120,17 +170,18 @@ def index(week_offset=0):
         for time_slot in time_slots:
             booked_by = is_slot_booked(date, time_slot, bookings)
             schedule[date][time_slot] = booked_by
-    
-    return render_template('index.html', 
+
+    # TEMPORARY: Use room_index.html template to test
+    return render_template('room_index.html', 
                          time_slots=time_slots, 
                          week_dates=week_dates, 
                          schedule=schedule,
                          week_offset=week_offset,
                          week_info=week_info)
 
-@app.route('/book', methods=['GET', 'POST'])
-def book():
-    """Book a meeting room with week navigation"""
+@app.route('/room/book', methods=['GET', 'POST'])
+def room_book():
+    """Book a meeting room"""
     week_offset = request.args.get('week_offset', 0, type=int)
     
     if request.method == 'POST':
@@ -144,19 +195,19 @@ def book():
         # Validate booking
         if not all([name, agenda, date, start_time, end_time]):
             flash('All fields are required!')
-            return redirect(url_for('book', week_offset=week_offset))
+            return redirect(url_for('room_book', week_offset=week_offset))
         
         # Validate that end time is after start time
         start_dt = datetime.strptime(start_time, "%H:%M")
         end_dt = datetime.strptime(end_time, "%H:%M")
         if end_dt <= start_dt:
             flash('End time must be after start time!')
-            return redirect(url_for('book', week_offset=week_offset))
+            return redirect(url_for('room_book', week_offset=week_offset))
         
         # Check for conflicts
-        conn = sqlite3.connect('meeting_room.db')
+        conn = sqlite3.connect('office_resources.db')
         c = conn.cursor()
-        c.execute('''SELECT * FROM bookings 
+        c.execute('''SELECT * FROM room_bookings 
                      WHERE date = ? AND (
                          (start_time < ? AND end_time > ?) OR
                          (start_time < ? AND end_time > ?) OR
@@ -164,18 +215,18 @@ def book():
                      )''', (date, end_time, start_time, start_time, start_time, start_time, end_time))
         
         if c.fetchone():
-            flash('Time slot conflicts with existing booking!')
+            flash('Time slot conflicts with existing room booking!')
             conn.close()
-            return redirect(url_for('book', week_offset=week_offset))
+            return redirect(url_for('room_book', week_offset=week_offset))
         
         # Create booking
-        c.execute('INSERT INTO bookings (name, agenda, date, start_time, end_time) VALUES (?, ?, ?, ?, ?)',
+        c.execute('INSERT INTO room_bookings (name, agenda, date, start_time, end_time) VALUES (?, ?, ?, ?, ?)',
                   (name, agenda, date, start_time, end_time))
         conn.commit()
         conn.close()
         
         flash(f'Meeting room booked for {name} on {date} from {start_time} to {end_time}!')
-        return redirect(url_for('index', week_offset=week_offset))
+        return redirect(url_for('room_index', week_offset=week_offset))
     
     # GET request - show booking form
     week_dates = get_week_dates(week_offset)
@@ -197,6 +248,7 @@ def book():
             prefill_end_time = ''
     
     return render_template('book.html', 
+                         booking_type='room',
                          week_dates=week_dates, 
                          time_slots=time_slots,
                          week_offset=week_offset,
@@ -205,27 +257,266 @@ def book():
                          prefill_start_time=prefill_start_time,
                          prefill_end_time=prefill_end_time)
 
-@app.route('/bookings')
-def view_bookings():
-    """View all current and future bookings"""
-    conn = sqlite3.connect('meeting_room.db')
+@app.route('/room/bookings')
+def room_bookings():
+    """View all room bookings"""
+    conn = sqlite3.connect('office_resources.db')
     c = conn.cursor()
     
-    # Get current date
     today = datetime.now().strftime("%Y-%m-%d")
     
-    # Show all future bookings (including today)
+    # Get upcoming bookings
     c.execute('''SELECT id, name, agenda, date, start_time, end_time, created_at 
-                 FROM bookings 
+                 FROM room_bookings 
                  WHERE date >= ?
                  ORDER BY date, start_time''', (today,))
     upcoming_bookings = c.fetchall()
     
-    # Show past bookings
+    # Get past bookings
     c.execute('''SELECT id, name, agenda, date, start_time, end_time, created_at 
-                 FROM bookings 
+                 FROM room_bookings 
                  WHERE date < ?
                  ORDER BY date DESC, start_time DESC''', (today,))
+    past_bookings = c.fetchall()
+    
+    conn.close()
+    
+    return render_template('bookings.html', 
+                         booking_type='room',
+                         upcoming_bookings=upcoming_bookings,
+                         past_bookings=past_bookings)
+
+@app.route('/room/delete/<int:booking_id>')
+def delete_room_booking(booking_id):
+    """Delete a room booking"""
+    conn = sqlite3.connect('office_resources.db')
+    c = conn.cursor()
+    
+    # Get booking details before deleting
+    c.execute('SELECT name, agenda, date, start_time, end_time FROM room_bookings WHERE id = ?', (booking_id,))
+    booking_details = c.fetchone()
+    
+    if booking_details:
+        c.execute('DELETE FROM room_bookings WHERE id = ?', (booking_id,))
+        conn.commit()
+        name, agenda, date, start, end = booking_details
+        flash(f'Room booking deleted: {name} on {date} from {start} to {end}')
+    else:
+        flash('Booking not found!')
+    
+    conn.close()
+    
+    return redirect(request.referrer or url_for('room_bookings'))
+
+@app.route('/room/quick_book')
+def room_quick_book():
+    """Quick booking from room schedule grid"""
+    date = request.args.get('date')
+    time = request.args.get('time')
+    week_offset = int(request.args.get('week_offset', 0))
+    
+    if date and time:
+        return redirect(url_for('room_book', date=date, time=time, week_offset=week_offset))
+    
+    return redirect(url_for('room_book', week_offset=week_offset))
+
+# COMPANY CAR ROUTES
+@app.route('/car')
+def car_index():
+    """Company car schedule view"""
+    week_offset = request.args.get('week_offset', 0, type=int)
+    
+    time_slots = get_time_slots()
+    week_dates = get_week_dates(week_offset)
+    bookings = get_bookings_for_week('car_bookings', week_offset)
+    week_info = get_week_info(week_offset)
+    
+    # Create a schedule grid
+    schedule = {}
+    for date_info in week_dates:
+        date = date_info['date']
+        schedule[date] = {}
+        for time_slot in time_slots:
+            booked_by = is_slot_booked(date, time_slot, bookings)
+            schedule[date][time_slot] = booked_by
+    
+    return render_template('car_index.html', 
+                         time_slots=time_slots, 
+                         week_dates=week_dates, 
+                         schedule=schedule,
+                         week_offset=week_offset,
+                         week_info=week_info)
+
+@app.route('/car/book', methods=['GET', 'POST'])
+def car_book():
+    """Book the company car"""
+    week_offset = request.args.get('week_offset', 0, type=int)
+    
+    if request.method == 'POST':
+        name = request.form['name']
+        agenda = request.form['agenda']  # This will be "purpose" for car bookings
+        date = request.form['date']
+        start_time = request.form['start_time']
+        end_time = request.form['end_time']
+        week_offset = int(request.form.get('week_offset', 0))
+        
+        # Validate booking
+        if not all([name, agenda, date, start_time, end_time]):
+            flash('All fields are required!')
+            return redirect(url_for('car_book', week_offset=week_offset))
+        
+        # Validate that end time is after start time
+        start_dt = datetime.strptime(start_time, "%H:%M")
+        end_dt = datetime.strptime(end_time, "%H:%M")
+        if end_dt <= start_dt:
+            flash('End time must be after start time!')
+            return redirect(url_for('car_book', week_offset=week_offset))
+        
+        # Check for conflicts (car can only be booked by one person at a time)
+        conn = sqlite3.connect('office_resources.db')
+        c = conn.cursor()
+        c.execute('''SELECT * FROM car_bookings 
+                     WHERE date = ? AND (
+                         (start_time < ? AND end_time > ?) OR
+                         (start_time < ? AND end_time > ?) OR
+                         (start_time >= ? AND start_time < ?)
+                     )''', (date, end_time, start_time, start_time, start_time, start_time, end_time))
+        
+        if c.fetchone():
+            flash('Car is already booked for that time slot!')
+            conn.close()
+            return redirect(url_for('car_book', week_offset=week_offset))
+        
+        # Create booking
+        c.execute('INSERT INTO car_bookings (name, agenda, date, start_time, end_time) VALUES (?, ?, ?, ?, ?)',
+                  (name, agenda, date, start_time, end_time))
+        conn.commit()
+        conn.close()
+        
+        flash(f'Company car booked for {name} on {date} from {start_time} to {end_time}!')
+        return redirect(url_for('car_index', week_offset=week_offset))
+    
+    # GET request - show booking form
+    week_dates = get_week_dates(week_offset)
+    time_slots = get_time_slots()
+    week_info = get_week_info(week_offset)
+    
+    # Handle pre-filled values from quick booking
+    prefill_date = request.args.get('date', '')
+    prefill_start_time = request.args.get('time', '')
+    prefill_end_time = ''
+    
+    # Calculate default end time (2 hours for car bookings)
+    if prefill_start_time:
+        try:
+            start_dt = datetime.strptime(prefill_start_time, "%H:%M")
+            end_dt = start_dt + timedelta(hours=2)  # Default 2 hours for car trips
+            prefill_end_time = end_dt.strftime("%H:%M")
+        except:
+            prefill_end_time = ''
+    
+    return render_template('book.html', 
+                         booking_type='car',
+                         week_dates=week_dates, 
+                         time_slots=time_slots,
+                         week_offset=week_offset,
+                         week_info=week_info,
+                         prefill_date=prefill_date,
+                         prefill_start_time=prefill_start_time,
+                         prefill_end_time=prefill_end_time)
+
+@app.route('/car/bookings')
+def car_bookings():
+    """View all car bookings"""
+    conn = sqlite3.connect('office_resources.db')
+    c = conn.cursor()
+    
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # Get upcoming bookings
+    c.execute('''SELECT id, name, agenda, date, start_time, end_time, created_at 
+                 FROM car_bookings 
+                 WHERE date >= ?
+                 ORDER BY date, start_time''', (today,))
+    upcoming_bookings = c.fetchall()
+    
+    # Get past bookings
+    c.execute('''SELECT id, name, agenda, date, start_time, end_time, created_at 
+                 FROM car_bookings 
+                 WHERE date < ?
+                 ORDER BY date DESC, start_time DESC''', (today,))
+    past_bookings = c.fetchall()
+    
+    conn.close()
+    
+    return render_template('bookings.html', 
+                         booking_type='car',
+                         upcoming_bookings=upcoming_bookings,
+                         past_bookings=past_bookings)
+
+@app.route('/car/delete/<int:booking_id>')
+def delete_car_booking(booking_id):
+    """Delete a car booking"""
+    conn = sqlite3.connect('office_resources.db')
+    c = conn.cursor()
+    
+    # Get booking details before deleting
+    c.execute('SELECT name, agenda, date, start_time, end_time FROM car_bookings WHERE id = ?', (booking_id,))
+    booking_details = c.fetchone()
+    
+    if booking_details:
+        c.execute('DELETE FROM car_bookings WHERE id = ?', (booking_id,))
+        conn.commit()
+        name, agenda, date, start, end = booking_details
+        flash(f'Car booking deleted: {name} on {date} from {start} to {end}')
+    else:
+        flash('Booking not found!')
+    
+    conn.close()
+    
+    return redirect(request.referrer or url_for('car_bookings'))
+
+@app.route('/car/quick_book')
+def car_quick_book():
+    """Quick booking from car schedule grid"""
+    date = request.args.get('date')
+    time = request.args.get('time')
+    week_offset = int(request.args.get('week_offset', 0))
+    
+    if date and time:
+        return redirect(url_for('car_book', date=date, time=time, week_offset=week_offset))
+    
+    return redirect(url_for('car_book', week_offset=week_offset))
+
+# COMBINED VIEWS
+@app.route('/bookings')
+def all_bookings():
+    """View all bookings (both room and car)"""
+    conn = sqlite3.connect('office_resources.db')
+    c = conn.cursor()
+    
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # Get all upcoming bookings
+    c.execute('''
+        SELECT id, name, agenda, date, start_time, end_time, 'room' as type, created_at 
+        FROM room_bookings WHERE date >= ?
+        UNION ALL
+        SELECT id, name, agenda, date, start_time, end_time, 'car' as type, created_at 
+        FROM car_bookings WHERE date >= ?
+        ORDER BY date, start_time
+    ''', (today, today))
+    upcoming_bookings = c.fetchall()
+    
+    # Get all past bookings
+    c.execute('''
+        SELECT id, name, agenda, date, start_time, end_time, 'room' as type, created_at 
+        FROM room_bookings WHERE date < ?
+        UNION ALL
+        SELECT id, name, agenda, date, start_time, end_time, 'car' as type, created_at 
+        FROM car_bookings WHERE date < ?
+        ORDER BY date DESC, start_time DESC
+    ''', (today, today))
     past_bookings = c.fetchall()
     
     conn.close()
@@ -234,43 +525,50 @@ def view_bookings():
                          upcoming_bookings=upcoming_bookings,
                          past_bookings=past_bookings)
 
-@app.route('/delete/<int:booking_id>')
-def delete_booking(booking_id):
-    """Delete a booking"""
-    conn = sqlite3.connect('meeting_room.db')
+# API ROUTES
+@app.route('/api/todays-bookings')
+def todays_bookings_api():
+    """API endpoint for today's bookings"""
+    conn = sqlite3.connect('office_resources.db')
     c = conn.cursor()
     
-    # Get booking details before deleting (for confirmation message)
-    c.execute('SELECT name, agenda, date, start_time, end_time FROM bookings WHERE id = ?', (booking_id,))
-    booking_details = c.fetchone()
+    today = datetime.now().strftime("%Y-%m-%d")
     
-    if booking_details:
-        c.execute('DELETE FROM bookings WHERE id = ?', (booking_id,))
-        conn.commit()
-        name, agenda, date, start, end = booking_details
-        flash(f'Booking deleted: {name} on {date} from {start} to {end}')
-    else:
-        flash('Booking not found!')
+    # Get today's room bookings
+    c.execute('''SELECT name, agenda, start_time, end_time 
+                 FROM room_bookings 
+                 WHERE date = ?
+                 ORDER BY start_time''', (today,))
+    room_bookings = [{'name': row[0], 'agenda': row[1], 'start_time': row[2], 'end_time': row[3]} 
+                     for row in c.fetchall()]
+    
+    # Get today's car bookings
+    c.execute('''SELECT name, agenda, start_time, end_time 
+                 FROM car_bookings 
+                 WHERE date = ?
+                 ORDER BY start_time''', (today,))
+    car_bookings = [{'name': row[0], 'agenda': row[1], 'start_time': row[2], 'end_time': row[3]} 
+                    for row in c.fetchall()]
     
     conn.close()
     
-    # Redirect back to where we came from
-    return redirect(request.referrer or url_for('view_bookings'))
+    return jsonify({
+        'room_bookings': room_bookings,
+        'car_bookings': car_bookings
+    })
 
-@app.route('/quick_book')
-def quick_book():
-    """Quick booking from schedule grid"""
-    date = request.args.get('date')
-    time = request.args.get('time')
-    week_offset = int(request.args.get('week_offset', 0))
-    
-    if date and time:
-        # Redirect to booking form with pre-filled date and time
-        return redirect(url_for('book', date=date, time=time, week_offset=week_offset))
-    
-    return redirect(url_for('book', week_offset=week_offset))
+# LEGACY ROUTES (for backward compatibility)
+@app.route('/book')
+def legacy_book():
+    """Redirect legacy book route to room booking"""
+    return redirect(url_for('room_book'))
+
+@app.route('/bookings_old')
+def legacy_bookings():
+    """Redirect legacy bookings route"""
+    return redirect(url_for('room_bookings'))
 
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=True)
