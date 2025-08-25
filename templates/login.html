@@ -12,6 +12,9 @@
             color: #0d2136 !important; /* Navy text for inputs */
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(13,33,54,0.15);
+            min-width: 350px;
+            max-width: 400px;
+            width: 100%;
         }
         .login-title {
             display: flex;
@@ -60,11 +63,26 @@
         .alert-danger {
             border-radius: 8px;
         }
+        @media (max-width: 576px) {
+            .container {
+                min-height: 100vh;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                padding: 0 !important;
+            }
+            .login-card {
+                min-width: 0;
+                max-width: 95vw;
+                width: 100%;
+                padding: 2rem 1rem !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-light">
     <div class="container d-flex justify-content-center align-items-center" style="height: 100vh;">
-        <div class="card login-card shadow p-4" style="min-width: 350px;">
+        <div class="card login-card shadow p-4">
             <div class="login-title">
                 <div class="login-logo-wrapper">
                     <!-- Logo SVG -->
