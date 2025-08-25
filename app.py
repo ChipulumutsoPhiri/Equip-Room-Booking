@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from datetime import datetime, timedelta
 import sqlite3
 import os
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = 'office-resource-booking-2025'
+app.config['SESSION_TYPE'] = 'filesystem'
 
 # Database setup
 def init_db():
@@ -142,6 +144,15 @@ def get_booking_stats():
         'car_stats': {'upcoming': car_upcoming, 'today': car_today}
     }
 
+def login_required(f):
+    """Decorator to enforce login requirement for certain routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # Routes
 @app.route('/')
 def index():
@@ -153,6 +164,7 @@ def index():
 
 # MEETING ROOM ROUTES
 @app.route('/room')
+@login_required
 def room_index():
     """Meeting room schedule view - TEMPORARY using car template"""
     week_offset = request.args.get('week_offset', 0, type=int)
@@ -180,6 +192,7 @@ def room_index():
                          week_info=week_info)
 
 @app.route('/room/book', methods=['GET', 'POST'])
+@login_required
 def room_book():
     """Book a meeting room"""
     week_offset = request.args.get('week_offset', 0, type=int)
@@ -258,6 +271,7 @@ def room_book():
                          prefill_end_time=prefill_end_time)
 
 @app.route('/room/bookings')
+@login_required
 def room_bookings():
     """View all room bookings"""
     conn = sqlite3.connect('office_resources.db')
@@ -287,7 +301,12 @@ def room_bookings():
                          past_bookings=past_bookings)
 
 @app.route('/room/delete/<int:booking_id>')
+@login_required
 def delete_room_booking(booking_id):
+    if session.get('user') != 'admin':
+        flash('Only admin can delete bookings!')
+        return redirect(url_for('room_bookings'))
+    
     """Delete a room booking"""
     conn = sqlite3.connect('office_resources.db')
     c = conn.cursor()
@@ -309,6 +328,7 @@ def delete_room_booking(booking_id):
     return redirect(request.referrer or url_for('room_bookings'))
 
 @app.route('/room/quick_book')
+@login_required
 def room_quick_book():
     """Quick booking from room schedule grid"""
     date = request.args.get('date')
@@ -322,6 +342,7 @@ def room_quick_book():
 
 # COMPANY CAR ROUTES
 @app.route('/car')
+@login_required
 def car_index():
     """Company car schedule view"""
     week_offset = request.args.get('week_offset', 0, type=int)
@@ -348,6 +369,7 @@ def car_index():
                          week_info=week_info)
 
 @app.route('/car/book', methods=['GET', 'POST'])
+@login_required
 def car_book():
     """Book the company car"""
     week_offset = request.args.get('week_offset', 0, type=int)
@@ -426,6 +448,7 @@ def car_book():
                          prefill_end_time=prefill_end_time)
 
 @app.route('/car/bookings')
+@login_required
 def car_bookings():
     """View all car bookings"""
     conn = sqlite3.connect('office_resources.db')
@@ -455,7 +478,12 @@ def car_bookings():
                          past_bookings=past_bookings)
 
 @app.route('/car/delete/<int:booking_id>')
+@login_required
 def delete_car_booking(booking_id):
+    if session.get('user') != 'admin':
+        flash('Only admin can delete bookings!')
+        return redirect(url_for('car_bookings'))
+    
     """Delete a car booking"""
     conn = sqlite3.connect('office_resources.db')
     c = conn.cursor()
@@ -477,6 +505,7 @@ def delete_car_booking(booking_id):
     return redirect(request.referrer or url_for('car_bookings'))
 
 @app.route('/car/quick_book')
+@login_required
 def car_quick_book():
     """Quick booking from car schedule grid"""
     date = request.args.get('date')
@@ -490,6 +519,7 @@ def car_quick_book():
 
 # COMBINED VIEWS
 @app.route('/bookings')
+@login_required
 def all_bookings():
     """View all bookings (both room and car)"""
     conn = sqlite3.connect('office_resources.db')
@@ -527,6 +557,7 @@ def all_bookings():
 
 # API ROUTES
 @app.route('/api/todays-bookings')
+@login_required
 def todays_bookings_api():
     """API endpoint for today's bookings"""
     conn = sqlite3.connect('office_resources.db')
@@ -567,6 +598,27 @@ def legacy_book():
 def legacy_bookings():
     """Redirect legacy bookings route"""
     return redirect(url_for('room_bookings'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'EquipAdmin' and password == 'equipgroupadmin2025':
+            session['user'] = 'admin'
+            return redirect(url_for('index'))
+        elif username == 'EquipGroup' and password == 'equip2025':
+            session['user'] = 'workmate'
+            return redirect(url_for('index'))
+        else:
+            error = 'Invalid username or password'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     init_db()
