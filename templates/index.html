@@ -2,12 +2,14 @@
 {% block content %}
 <div class="hero-section text-center mb-5">
     <h1 class="display-4 mb-3">
-        <i class="fas fa-building text-primary me-3"></i>
+        <i class="fas fa-building"></i>
         Office Resource Booking
     </h1>
 </div>
 
-<div class="row g-4">
+<div class="office-section navy-section">
+  <h2 class="section-title"><i class="fas fa-building"></i> Office Resource Booking</h2>
+  <div class="row g-4">
     <!-- Meeting Room Booking Card -->
     <div class="col-md-6">
         <div class="resource-card h-100" onclick="location.href='{{ url_for('room_index') }}'">
@@ -35,10 +37,10 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <a href="{{ url_for('room_index') }}" class="btn btn-primary btn-lg me-2">
+                    <a href="{{ url_for('room_index') }}" class="btn btn-view-schedule">
                         <i class="fas fa-calendar-alt me-2"></i>View Schedule
                     </a>
-                    <a href="{{ url_for('room_book') }}" class="btn btn-outline-primary">
+                    <a href="{{ url_for('room_quick_book') }}" class="btn btn-quick-book">
                         <i class="fas fa-plus me-2"></i>Quick Book
                     </a>
                 </div>
@@ -73,10 +75,10 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <a href="{{ url_for('car_index') }}" class="btn btn-success btn-lg me-2">
+                    <a href="{{ url_for('car_index') }}" class="btn btn-view-schedule">
                         <i class="fas fa-calendar-alt me-2"></i>View Schedule
                     </a>
-                    <a href="{{ url_for('car_book') }}" class="btn btn-outline-success">
+                    <a href="{{ url_for('car_quick_book') }}" class="btn btn-quick-book">
                         <i class="fas fa-plus me-2"></i>Quick Book
                     </a>
                 </div>
@@ -84,37 +86,20 @@
         </div>
     </div>
 </div>
+</div>
 
-<!-- Quick Access Section -->
-<div class="row mt-5">
-    <div class="col-12">
-        <div class="card bg-light">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="fas fa-lightning-bolt me-2 text-warning"></i>
-                    Quick Actions
-                </h5>
-                <div class="row g-3">
-                    
-                    <div class="col-md-3">
-                        <a href="{{ url_for('room_book') }}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-door-open me-2"></i>Book Room
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('car_book') }}" class="btn btn-outline-success w-100">
-                            <i class="fas fa-car me-2"></i>Book Car
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="#" onclick="showTodaysBookings()" class="btn btn-outline-info w-100">
-                            <i class="fas fa-clock me-2"></i>Today's Schedule
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="quick-actions navy-section quick-actions">
+  <h2 class="quick-title"><i class="fas fa-bolt"></i> Quick Actions</h2>
+  <!-- Example quick action buttons -->
+  <a href="{{ url_for('room_quick_book') }}" class="btn btn-quick-action">
+    <i class="fas fa-door-open"></i> Quick Book Room
+  </a>
+  <a href="{{ url_for('car_quick_book') }}" class="btn btn-quick-action">
+    <i class="fas fa-car"></i> Quick Book Car
+  </a>
+  <button type="button" class="btn btn-quick-action" onclick="showTodaysBookings()">
+    <i class="fas fa-calendar-day"></i> Today's Schedule
+  </button>
 </div>
 
 <!-- Today's Bookings Modal -->
@@ -140,7 +125,6 @@
 
 <style>
 .hero-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     margin: -1.5rem -15px 3rem -15px;
     padding: 4rem 2rem;
@@ -246,6 +230,14 @@
     
     .resource-stats .row > .col {
         margin-bottom: 0.5rem;
+    }
+    /* Quick actions buttons: smaller and spaced */
+    .btn-quick-action {
+        font-size: 0.95rem !important;
+        padding: 0.5rem 1rem !important;
+        margin-bottom: 0.5rem !important;
+        display: block !important;
+        width: 100% !important;
     }
 }
 </style>
