@@ -20,12 +20,12 @@
     </div>
     
     <div class="week-nav-buttons">
-        <a href="{{ url_for('car_index', week_offset=week_offset-1) }}" class="btn btn-outline-success nav-btn">
+        <a href="{{ url_for('car_index', week_offset=week_offset-1) }}" class="btn btn-outline-primary nav-btn">
             <i class="fas fa-chevron-left"></i>
             <span class="d-none d-sm-inline">Previous</span>
         </a>
         
-        <a href="{{ url_for('car_index', week_offset=week_offset+1) }}" class="btn btn-outline-success nav-btn">
+        <a href="{{ url_for('car_index', week_offset=week_offset+1) }}" class="btn btn-outline-primary nav-btn">
             <span class="d-none d-sm-inline">Next</span>
             <i class="fas fa-chevron-right"></i>
         </a>
@@ -158,20 +158,37 @@
     background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
     border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .week-navigation .week-display {
     color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
-.week-navigation .btn-outline-success {
-    border-color: white;
-    color: white;
+.week-navigation .week-nav-buttons {
+    display: flex;
+    gap: 0.5rem;
 }
 
-.week-navigation .btn-outline-success:hover {
-    background-color: white;
-    color: #28a745;
+.week-navigation .btn-outline-primary {
+    border-radius: 25px;
+    font-weight: 500;
+    border: 2px solid #fff;
+    color: #212529 !important;
+    background: #fff !important;
+    transition: background 0.2s, color 0.2s;
+}
+
+.week-navigation .btn-outline-primary:hover {
+    background: #20c997 !important;
+    color: #fff !important;
+    border-color: #20c997 !important;
 }
 
 .current-week {
