@@ -27,10 +27,12 @@
                     <td>{{ booking[2] }}</td>
                     <td>{{ booking[3] }} - {{ booking[4] }} to {{ booking[5] }}</td>
                     <td>
+                        {% if session.get('user') == 'admin' %}
                         <button class="btn btn-sm btn-danger"
-                                onclick="showDeleteModal('{{ booking[0] }}', '{{ booking[1] }}', '{{ booking[3] }}', '{{ booking[4] }}', '{{ booking[5] }}', 'car')">
+                                onclick="showDeleteModal('{{ booking[0] }}', '{{ booking[1] }}', '{{ booking[3] }}', '{{ booking[4] }}', '{{ booking[5] }}', '{{ booking_type }}')">
                             🗑️ Delete
                         </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
