@@ -7,6 +7,84 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        body {
+          background-color: #f4f2ef !important; /* Light beige */
+        }
+        .navbar {
+          background-color: #0d2136 !important;
+          border-bottom: 1px solid #a8935a;
+        }
+        .navbar .nav-link, .navbar .navbar-brand, .navbar .navbar-text {
+          color: #a8935a !important;
+        }
+        .navbar .nav-link:hover, .navbar .navbar-brand:hover {
+          color: #d4bc7c !important;
+        }
+        .navbar-brand img {
+          height: 40px;
+          width: auto;
+          filter: none;
+        }
+        /* Navy section backgrounds */
+        .navy-section, .office-section, .meeting-section, .car-section, .quick-actions {
+          background-color: #0d2136 !important;
+          color: #a8935a !important;
+          border-radius: 10px;
+          padding: 1.5rem;
+          margin-bottom: 2rem;
+        }
+        /* Gold text/icons */
+        .navy-section h2, .office-section h2, .meeting-section h2, .car-section h2,
+        .navy-section .section-title, .office-section .section-title, .meeting-section .section-title, .car-section .section-title,
+        .quick-actions .quick-title {
+          color: #a8935a !important;
+        }
+        /* Plum for view schedule buttons */
+        .btn-view-schedule {
+          background-color: #512137 !important;
+          color: #f4f2ef !important;
+          border: none;
+        }
+        /* Green for quick book buttons */
+        .btn-quick-book {
+          background-color: #2f3527 !important;
+          color: #f4f2ef !important;
+          border: none;
+        }
+        /* Blue grey for quick actions buttons */
+        .btn-quick-action {
+          background-color: #8a949e !important;
+          color: #fff !important; /* White text and icons */
+          border: none;
+        }
+        /* Quick actions icons navy */
+        .quick-actions i {
+          color: #0d2136 !important;
+        }
+        /* Gold icons in navy sections except quick actions */
+        .navy-section i, .office-section i, .meeting-section i, .car-section i {
+          color: #a8935a !important;
+        }
+        /* Hero section navy background and gold text/icons */
+        .hero-section {
+          background: #0d2136 !important;
+          color: #a8935a !important;
+          margin: -1.5rem -15px 3rem -15px;
+          padding: 4rem 2rem;
+          border-radius: 0 0 20px 20px;
+        }
+        .hero-section h1, .hero-section i {
+          color: #a8935a !important;
+        }
+        .hero-section .lead {
+          color: #a8935a !important;
+          font-weight: 900;
+          font-size: 1.4rem;
+          text-shadow: 0 3px 12px rgba(0,0,0,0.3);
+          letter-spacing: 0.8px;
+          opacity: 0.95;
+        }
+
         /* Global responsive improvements */
         .navbar-brand svg {
             height: 30px;
@@ -57,10 +135,33 @@
                 padding-right: 15px;
             }
         }
+
+        .navbar-toggler {
+            background-color: #a8935a !important; /* Gold */
+            border: none;
+            border-radius: 6px;
+            padding: 7px 12px;
+            box-shadow: 0 2px 8px rgba(13,33,54,0.08);
+        }
+        .custom-toggler-icon {
+            display: inline-block;
+            width: 28px;
+            height: 22px;
+            position: relative;
+        }
+        .custom-toggler-icon span {
+            display: block;
+            height: 4px;
+            width: 100%;
+            background: #0d2136; /* Navy */
+            border-radius: 2px;
+            margin: 3px 0;
+            transition: all 0.2s;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <!-- ✅ Your original logo preserved -->
@@ -86,7 +187,11 @@
                 </svg>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+                <span class="custom-toggler-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
@@ -120,6 +225,14 @@
                             <li><a class="dropdown-item" href="/car/bookings">View Bookings</a></li>
                         </ul>
                     </li>
+                    {% if session.get('user') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="d-lg-inline d-none">Logout</span>
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
