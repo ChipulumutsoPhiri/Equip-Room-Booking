@@ -4,29 +4,80 @@
 <h2>Book {{ "Car" if booking_type == "car" else "Meeting Room" }}</h2>
 
 <!-- Week Navigation -->
-<div class="week-navigation">
+<div class="week-navigation {% if week_info.is_current_week %}current-week{% endif %}">
     {% if booking_type == 'car' %}
-        <a href="{{ url_for('car_book', week_offset=week_offset-1) }}" class="btn btn-outline-secondary nav-btn">
+        <a href="{{ url_for('car_book', week_offset=week_offset-1) }}" class="btn btn-outline-primary nav-btn">
             <i class="fas fa-chevron-left"></i> Previous Week
         </a>
     {% else %}
-        <a href="{{ url_for('room_book', week_offset=week_offset-1) }}" class="btn btn-outline-secondary nav-btn">
+        <a href="{{ url_for('room_book', week_offset=week_offset-1) }}" class="btn btn-outline-primary nav-btn">
             <i class="fas fa-chevron-left"></i> Previous Week
         </a>
     {% endif %}
 
-    <div class="week-display">{{ week_info.week_display }}</div>
+    <div class="week-display">
+        {{ week_info.week_display }}
+        {% if week_info.is_current_week %}
+            <span class="badge bg-warning text-dark ms-2">Current Week</span>
+        {% endif %}
+    </div>
 
     {% if booking_type == 'car' %}
-        <a href="{{ url_for('car_book', week_offset=week_offset+1) }}" class="btn btn-outline-secondary nav-btn">
+        <a href="{{ url_for('car_book', week_offset=week_offset+1) }}" class="btn btn-outline-primary nav-btn">
             Next Week <i class="fas fa-chevron-right"></i>
         </a>
     {% else %}
-        <a href="{{ url_for('room_book', week_offset=week_offset+1) }}" class="btn btn-outline-secondary nav-btn">
+        <a href="{{ url_for('room_book', week_offset=week_offset+1) }}" class="btn btn-outline-primary nav-btn">
             Next Week <i class="fas fa-chevron-right"></i>
         </a>
     {% endif %}
 </div>
+
+<style>
+.week-navigation {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: #212529;
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.week-navigation .week-display {
+    color: #212529;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.week-navigation .nav-btn {
+    border-radius: 25px;
+    font-weight: 500;
+    border: 2px solid #fff;
+    color: #212529 !important;
+    background: #fff !important;
+    transition: background 0.2s, color 0.2s;
+}
+.week-navigation .nav-btn:hover {
+    background: #fd7e14 !important;
+    color: #fff !important;
+    border-color: #fd7e14 !important;
+}
+.current-week {
+    background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+    border: 2px solid #fd7e14 !important;
+}
+.current-week .week-display {
+    color: #212529;
+}
+@media (max-width: 768px) {
+    .week-navigation {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+</style>
 
 <form method="POST" id="bookingForm" onsubmit="return validateForm()">
     <input type="hidden" name="week_offset" value="{{ week_offset }}">
@@ -86,14 +137,14 @@
         </select>
     </div>
 
-    <button type="submit" class="btn btn-success" id="submitButton">
+    <button type="submit" class="btn btn-success btn-lg me-2" id="submitButton">
         Book {{ "Car" if booking_type == "car" else "Room" }}
     </button>
 
     {% if booking_type == 'car' %}
-        <a href="{{ url_for('car_index', week_offset=week_offset) }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ url_for('car_index', week_offset=week_offset) }}" class="btn btn-secondary btn-lg">Cancel</a>
     {% else %}
-        <a href="{{ url_for('room_index', week_offset=week_offset) }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ url_for('room_index', week_offset=week_offset) }}" class="btn btn-secondary btn-lg">Cancel</a>
     {% endif %}
 </form>
 
